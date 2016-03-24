@@ -43,6 +43,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Balancer.cs" />
+    <Compile Include="Block.cs" />
+    <Compile Include="Layer.cs" />
+    <Compile Include="Periodic.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
