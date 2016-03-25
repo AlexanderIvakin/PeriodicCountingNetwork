@@ -1,29 +1,22 @@
-﻿namespace PeriodicCountingNetwork
+﻿using System.Threading;
+
+namespace PeriodicCountingNetwork
 {
     public class Balancer
     {
-        private readonly object _lock = new object();
-
-        private bool _toggle = true;
+        private int _toggle = 1;
 
         public int Traverse()
         {
-            lock (_lock)
+            while (true)
             {
-                try
+                if (1 == Interlocked.Exchange(ref _toggle, 0))
                 {
-                    if (_toggle)
-                    {
-                        return 0;
-                    }
-                    else
-                    {
-                        return 1;
-                    }
+                    return 0;
                 }
-                finally
+                if (0 == Interlocked.Exchange(ref _toggle, 1))
                 {
-                    _toggle = !_toggle;
+                    return 1;
                 }
             }
         }
