@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace PeriodicCountingNetwork
@@ -10,22 +12,46 @@ namespace PeriodicCountingNetwork
         static void Main(string[] args)
         {
             const int width = 4;
-            var bitonic = new Periodic(width);
-            var dict = new ConcurrentDictionary<int, int>();
+            var periodic = new Periodic(width);
+            var counters = new int[width];
 
-            Parallel.For(0, 100001, (i) =>
+            const int tokenCount = 893235;
+            var tokens = new int[tokenCount];
+
+            var rand = new Random();
+            var randLock = new object();
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+            Parallel.For(0, tokenCount, (i) =>
             {
-                var r = new Random();
-                dict.TryAdd(i, bitonic.Traverse(r.Next(4)));
+                int next;
+                lock (randLock)
+                {
+                    next = rand.Next(width);
+                }
+                tokens[i] = next;
             });
+            stopWatch.Stop();
+            var inputGeneration = stopWatch.Elapsed;
 
-            foreach (var kk in dict.Select(p => p)
-                .GroupBy(p => p.Value)
-                .Select(group => new { output = group.Key, count = group.Count() })
-                .OrderBy(group => group.output))
+            stopWatch.Restart();
+            Parallel.For(0, tokenCount, (i) =>
             {
-                Console.WriteLine($"Output: {kk.output} Count: {kk.count}");
+                Interlocked.Increment(ref counters[periodic.Traverse(tokens[i])]);
+            });
+            var traversing = stopWatch.Elapsed;
+
+            stopWatch.Restart();
+            for (var i = 0; i < width; ++i)
+            {
+                Console.WriteLine($"Output: {i} Count: {counters[i]}");
             }
+            stopWatch.Stop();
+            var outputing = stopWatch.Elapsed;
+
+            Console.WriteLine($"Time to generate the input: {inputGeneration.ToString("mm\\:ss\\.fffffff")}.");
+            Console.WriteLine($"Time to traverse the network: {traversing.ToString("mm\\:ss\\.fffffff")}.");
+            Console.WriteLine($"Time to output to console: {outputing.ToString("mm\\:ss\\.fffffff")}.");
 
             Console.WriteLine("Press any key to continue");
             Console.ReadKey();
